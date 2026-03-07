@@ -30,7 +30,7 @@ if id "$USERNAME" &>/dev/null; then
 else
     echo "创建运维用户 $USERNAME..."
     useradd -m -s /bin/bash "$USERNAME"
-    echo "$USERNAME:DevOps@2026" | chpasswd   # 临时密码（建议马上改成密钥）
+    passwd $USERNAME
     usermod -aG sudo "$USERNAME"
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/90-$USERNAME
     chmod 0440 /etc/sudoers.d/90-$USERNAME
@@ -95,6 +95,4 @@ echo -e "\033[1;32m========== Server Init 完成！ ==========\033[0m"
 echo -e "\033[1;33m下一步操作（强烈推荐）：\033[0m"
 echo "1. 在你本地电脑生成密钥：ssh-keygen -t ed25519"
 echo "2. 把公钥复制到服务器：ssh-copy-id $USERNAME@你的虚拟机IP"
-echo "3. 以后用下面命令登录（密码登录已禁用）："
-echo "   ssh $USERNAME@你的虚拟机IP"
-echo "4. 登录后建议立即改密码：passwd"
+echo "3. 修改sshd_config禁用密码登陆"
