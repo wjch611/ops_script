@@ -30,7 +30,7 @@ if id "$USERNAME" &>/dev/null; then
 else
     echo "创建运维用户 $USERNAME..."
     useradd -m -s /bin/bash "$USERNAME"
-    passwd $USERNAME
+    passwd "$USERNAME"
     usermod -aG sudo "$USERNAME"
     echo "$USERNAME ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/90-$USERNAME
     chmod 0440 /etc/sudoers.d/90-$USERNAME
