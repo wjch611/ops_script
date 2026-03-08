@@ -1,2 +1,1 @@
-# init.sh
-deb init sh
+# 存放运维常用脚本
