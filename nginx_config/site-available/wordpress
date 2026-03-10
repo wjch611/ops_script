@@ -1,0 +1,85 @@
+server {
+    listen 80 default_server;
+    server_name _;
+    root /var/www/html;
+    index index.php index.html index.htm;
+
+    # 隐藏 nginx 版本
+    server_tokens off;
+
+    # =============================
+    # 核心安全响应头
+    # =============================
+    # 使用 map 定义的变量
+    add_header Content-Security-Policy $csp_policy always;
+    
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header Permissions-Policy "geolocation=(), microphone=(), camera=()" always;
+
+    # =============================
+    # 路径与文件保护
+    # =============================
+
+    # 禁止访问隐藏文件
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # 禁止访问敏感文件及备份
+    location ~* /(wp-config.php|readme.html|license.txt|\.bak|\.sql|\.env) {
+        deny all;
+    }
+
+    # 禁止 xmlrpc
+    location = /xmlrpc.php {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    # 禁止 uploads 目录执行 PHP
+    location ~* /wp-content/uploads/.*\.php$ {
+        deny all;
+    }
+
+    # WordPress 核心路由
+    location / {
+        try_files $uri $uri/ /index.php?$args;
+    }
+
+    # =============================
+    # PHP 处理 (优化部分)
+    # =============================
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php8.1-fpm.sock;
+
+        # 调优缓冲区，防止大页面拉取失败
+        fastcgi_buffers 16 16k; 
+        fastcgi_buffer_size 32k;
+
+        # 确保在 PHP 请求中也发送 CSP Header
+        add_header Content-Security-Policy $csp_policy always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+    }
+
+    # =============================
+    # 静态文件缓存 (优化部分)
+    # =============================
+    location ~* \.(jpg|jpeg|png|gif|ico|css|js|woff|woff2|ttf|svg|eot|otf)$ {
+        expires 30d;
+        access_log off;
+        add_header Cache-Control "public, no-transform";
+        
+        # 静态资源通常不需要复杂的 CSP，保持默认同源即可
+        add_header Access-Control-Allow-Origin "*"; 
+    }
+
+    client_max_body_size 64M;
+}
